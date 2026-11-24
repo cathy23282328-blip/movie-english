@@ -263,7 +263,8 @@ function parseYT(txt){
     const m2=!m0&&!m&&l.match(/^((?:\d{1,2}:)?\d{1,2}:\d{2})([A-Za-z"'(\[♪].*)$/);
     const mm=m0?[m0[0],m0[1],m0[3]]:(m||m2);
     if(mm){flush();curT=tsec(mm[1]);if(mm[2])buf.push(mm[2]);return}
-    if(/^\d+\s*(秒|分鐘|seconds?|minutes?)/.test(l))return;
+    if(/^\d+\s*(秒|分鐘|小時|seconds?|minutes?|hours?)/.test(l))return;
+    if(/^(第\s*\d+\s*章節?|Chapter\s*\d+)\s*[:：]/i.test(l))return;
     if(curT!=null)buf.push(l)});
   flush();
   out.forEach((x,i)=>x.e=out[i+1]?out[i+1].s:x.s+4);
@@ -380,7 +381,7 @@ async function transcribe(file){
 
 
 // ---------- player ----------
-let cur=null,subs=[],player=null,ytReady=false,vEl=null,segEnd=null,loopOn=false,apHold=-1;
+let cur=null,subs=[],player=null,ytReady=false,vEl=null,segEnd=null,loopOn=false,apHold=-1,lineDone=-1;
 function openVid(id){cur=VIDS.find(v=>v.id===id);if(!cur)return;subs=LS.get(subKey(id),[]);cur.idx=Math.min(cur.idx||0,subs.length-1);
   $('#vHome').classList.add('hidden');$('#vPlay').classList.remove('hidden');$('#vtitle').textContent=cur.name;location.hash=id;
   buildPlayer();syncOpts();renderTS();renderCap();window.scrollTo(0,0)}
@@ -404,12 +405,17 @@ function seek(t){if(vEl)vEl.currentTime=t;else if(player&&ytReady)player.seekTo(
 function play(){if(vEl){const p=vEl.play();if(p&&p.catch)p.catch(()=>{})}else if(player&&ytReady)player.playVideo()}
 function pause(){if(vEl)vEl.pause();else if(player&&ytReady)player.pauseVideo()}
 function setRate(){if(vEl)vEl.playbackRate=ST.rate;else if(player&&ytReady)try{player.setPlaybackRate(ST.rate)}catch(e){}}
-function playLine(i){if(i!=null)setIdx(i);const s=subs[cur.idx];if(!s)return;if(!ready()){toast(cur.type==='yt'?'影片還在載入…':'請先選影片檔');return}stopSay();apHold=-1;seek(Math.max(0,s.s-0.1));segEnd=s.e+0.2;play()}
+function playLine(i){if(i!=null)setIdx(i);const s=subs[cur.idx];if(!s)return;if(!ready()){toast(cur.type==='yt'?'影片還在載入…':'請先選影片檔');return}stopSay();apHold=-1;lineDone=-1;seek(Math.max(0,s.s-0.1));segEnd=s.e+0.2;play()}
+// ▶：每句停一下 開 → 一次播一句，播完再按 ▶ 就播下一句；關 → 從這句一直播下去
+function playOn(){if(!cur)return;if(!ready()){toast(cur.type==='yt'?'影片還在載入…':'請先選影片檔');return}
+  let i=cur.idx;if(lineDone===i&&i<subs.length-1)i++;
+  if(ST.ap){playLine(i);return}
+  stopSay();setIdx(i);const s=subs[i];segEnd=null;lineDone=-1;apHold=-1;const t=nowT();if(!s||t<s.s-0.3||t>s.e)seek(Math.max(0,s.s-0.1));play()}
 setInterval(()=>{if(!cur||!ready())return;const t=nowT();
-  if(segEnd!=null){if(t>=segEnd){if(loopOn){seek(Math.max(0,subs[cur.idx].s-0.1));play()}else{pause();segEnd=null}}return}
+  if(segEnd!=null){if(t>=segEnd){if(loopOn){seek(Math.max(0,subs[cur.idx].s-0.1));play()}else{pause();segEnd=null;lineDone=cur.idx}}return}
   if(!isPlaying())return;
   const i=findIdx(t);
-  if(ST.ap&&apHold!==cur.idx&&subs[cur.idx]&&t>=subs[cur.idx].e+0.05&&t<subs[cur.idx].e+1.5&&i!==cur.idx){pause();apHold=cur.idx;return}
+  if(ST.ap&&apHold!==cur.idx&&subs[cur.idx]&&t>=subs[cur.idx].e+0.05&&t<subs[cur.idx].e+1.5&&i!==cur.idx){pause();apHold=cur.idx;lineDone=cur.idx;return}
   if(i>=0&&i!==cur.idx){setIdx(i)}},100);
 function findIdx(t){let lo=0,hi=subs.length-1,a=-1;while(lo<=hi){const m=(lo+hi)>>1;if(subs[m].s<=t+0.05){a=m;lo=m+1}else hi=m-1}return a}
 function setIdx(i){i=Math.max(0,Math.min(subs.length-1,i));if(i===cur.idx&&$('#l1').dataset.i==String(i))return;cur.idx=i;saveV();renderCap();markTS()}
@@ -450,10 +456,10 @@ function markTS(jump){const rs=$('#tsl').children;$$('#tsl .row.cur').forEach(r=
   const box=$('#tsl');const top=r.offsetTop-box.offsetTop;if(jump||top<box.scrollTop+40||top>box.scrollTop+box.clientHeight-80)box.scrollTo({top:top-box.clientHeight/3,behavior:jump?'auto':'smooth'})}
 
 // ---------- controls ----------
-$('#playBtn').onclick=()=>{if(isPlaying()&&segEnd==null){pause();return}playLine()};
+$('#playBtn').onclick=()=>{if(isPlaying()){pause();segEnd=null;return}playOn()};
 $('#prevBtn').onclick=()=>playLine(cur.idx-1);$('#nextBtn').onclick=()=>playLine(cur.idx+1);
 $('#loopBtn').onclick=()=>{loopOn=!loopOn;$('#loopBtn').classList.toggle('on',loopOn);toast(loopOn?'這句會一直重複':'取消重複');if(loopOn)playLine()};
-$('#autoPause').onchange=e=>{ST.ap=e.target.checked;saveST();$('#apTog').classList.toggle('on',ST.ap);if(ST.ap)toast('每句播完會停下來，按 ▶ 繼續')};
+$('#autoPause').onchange=e=>{ST.ap=e.target.checked;saveST();$('#apTog').classList.toggle('on',ST.ap);if(ST.ap){toast('每句播完會停下來，按 ▶ 播下一句');if(isPlaying()&&segEnd==null)apHold=-1}else{segEnd=null;toast('會一直播下去')}};
 $$('#speed button').forEach(b=>b.onclick=()=>{ST.rate=+b.dataset.s;saveST();syncOpts();setRate()});
 function setAcc(a){ST.acc=a;saveST();$('#accUS').setAttribute('aria-pressed',String(a==='us'));$('#accUK').setAttribute('aria-pressed',String(a==='uk'))}
 $('#accUS').onclick=()=>{setAcc('us');say(plain(subs[cur.idx]))};$('#accUK').onclick=()=>{setAcc('uk');say(plain(subs[cur.idx]))};
