@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>紅豆家・看片學英文</title>
+<meta name="description" content="上面看影片，下面一段一段英文字幕，點字查發音和意思">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="看片學英文">
+<meta name="theme-color" content="#0E1014">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+/*
+VOICE: 俐落、專業、安靜——像一套給認真學英文的人用的工作台
+IDEA: 放映室＋逐字稿：影片是主角，字幕像劇本一行一行排好、正在播的那行亮起來
+PICTURE: 影片本身＋放大的當下字幕
+COLOUR and TYPE: 深炭灰底、象牙白字、一個薄荷綠重點色、珊瑚色當收藏；Inter＋Noto Sans TC
+LAYOUT: 電腦／平板橫放：左影片＋當下字幕、右逐字稿；手機上下疊
+*/
+:root{--bg:#0E1014;--panel:#161920;--panel2:#1D212A;--line:#2A2F3A;--ink:#ECEEF2;--muted:#8E95A3;--dim:#5C6372;--acc:#5FD3B3;--accD:#2E9C80;--accS:rgba(95,211,179,.12);--coral:#FF8A7A;--warn:#F3C969;
+  --ui:"Inter","Noto Sans TC",system-ui,-apple-system,sans-serif;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--ui);overflow-x:clip;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.hidden{display:none!important}
+.wrap{max-width:1360px;margin:0 auto;padding:0 20px 48px}
+header.top{display:flex;align-items:center;gap:14px;height:64px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex:1}
+.mark{width:30px;height:30px;border-radius:8px;background:var(--acc);display:grid;place-items:center;color:#0E1014;font:800 15px var(--ui)}
+.brand b{font-weight:700;font-size:1rem;letter-spacing:.01em}
+.brand .en{color:var(--muted);font-size:.82rem;margin-left:4px}
+@media(max-width:520px){.brand .en{display:none}}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;color:var(--muted);font-weight:600;font-size:.85rem;padding:6px 12px;border-radius:7px;min-height:34px;white-space:nowrap}
+.seg button[aria-pressed=true]{background:var(--panel2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.btn{border:0;background:var(--acc);color:#0B0D10;font-weight:700;font-size:.92rem;padding:0 16px;height:42px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;white-space:nowrap}
+.btn:hover{filter:brightness(1.07)}
+.btn.line{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.line:hover{background:var(--panel2)}
+.btn:disabled{opacity:.4;cursor:default}
+.icon{width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--panel);display:inline-grid;place-items:center;color:var(--ink);padding:0}
+.icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon.on{background:var(--accS);border-color:var(--accD);color:var(--acc)}
+.icon.big{width:52px;height:52px;border-radius:50%;background:var(--ink);color:#0B0D10;border:0}
+.icon.big svg{width:22px;height:22px;fill:currentColor;stroke:none}
+.lbl{font-size:.75rem;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.sub{color:var(--muted);font-size:.88rem}
+
+/* home */
+.intro{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap;margin:8px 0 22px}
+.intro h1{font-size:clamp(1.6rem,4vw,2.4rem);line-height:1.1;margin:0 0 8px;font-weight:800;letter-spacing:-.02em}
+.intro p{margin:0;color:var(--muted);max-width:62ch}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.vc{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;text-align:left;padding:0;color:inherit;display:block;width:100%}
+.vc:hover{border-color:#3A4150}
+.vc .th{aspect-ratio:16/9;background:#0A0C10 center/cover no-repeat;display:grid;place-items:center;color:var(--dim);font-size:.85rem}
+.vc .meta{padding:12px 14px 14px}
+.vc b{display:block;font-weight:600;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.vc .pbar{height:3px;background:var(--line);border-radius:3px;margin-top:10px;overflow:hidden}
+.vc .pbar i{display:block;height:100%;background:var(--acc)}
+.vc .x{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:8px;border:0;background:rgba(0,0,0,.55);color:#fff;opacity:.0;transition:opacity .15s}
+.vc:hover .x,.vc .x:focus{opacity:1}
+@media(hover:none){.vc .x{opacity:.85}}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:40px 20px;text-align:center;color:var(--muted)}
+.words{margin-top:34px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px;font-size:.9rem;color:var(--ink)}
+
+/* player */
+.stage{display:grid;gap:20px}
+@media(min-width:980px){.stage{grid-template-columns:minmax(0,1.6fr) minmax(330px,1fr);align-items:start}.ts{position:sticky;top:16px;height:calc(100vh - 32px)}}
+.back{border:0;background:transparent;color:var(--muted);font-weight:600;padding:0;height:36px;display:inline-flex;align-items:center;gap:6px}
+.back:hover{color:var(--ink)}
+.screen{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.screen>div,.screen iframe,.screen video{position:absolute;inset:0;width:100%;height:100%;border:0}
+.screen video{object-fit:contain}
+.pick{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:10px;text-align:center;padding:20px;color:var(--muted);cursor:pointer}
+.pick b{color:var(--ink)}
+.vt{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:14px 0 6px;flex-wrap:wrap}
+.vt h2{margin:0;font-size:1.05rem;font-weight:700}
+.cap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 24px 18px;margin-top:12px}
+.capmeta{display:flex;justify-content:space-between;align-items:center;gap:10px;color:var(--muted);font-size:.82rem;font-variant-numeric:tabular-nums}
+.line1{font-size:clamp(1.3rem,2.6vw,1.75rem);font-weight:600;line-height:1.5;letter-spacing:-.01em;margin:12px 0 4px;min-height:2.6em}
+.line1 .wd{cursor:pointer;border-radius:5px;padding:0 1px;transition:background .12s}
+.line1 .wd:hover{background:var(--accS);color:var(--acc)}
+.line1 .wd.saved{text-decoration:underline;text-decoration-color:var(--coral);text-decoration-thickness:2px;text-underline-offset:5px}
+.line0,.line2{color:var(--dim);font-size:.95rem;line-height:1.45}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.bar .sp{flex:1}
+.tog{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);height:42px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);user-select:none}
+.tog input{appearance:none;width:30px;height:18px;border-radius:9px;background:var(--line);position:relative;margin:0;cursor:pointer;transition:background .15s}
+.tog input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}
+.tog input:checked{background:var(--acc)}
+.tog input:checked::after{left:14px}
+.tog.on{color:var(--ink)}
+
+/* transcript */
+.ts{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;min-height:420px}
+
+@media(max-width:979px){.ts{max-height:70vh}}
+.tshead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.tshead b{font-size:.95rem}
+.tsl{overflow:auto;flex:1;padding:6px}
+.row{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:10px 10px;border-radius:9px;cursor:pointer;color:var(--muted);border-left:2px solid transparent}
+.row:hover{background:var(--panel2);color:var(--ink)}
+.row .t{font-size:.78rem;font-variant-numeric:tabular-nums;padding-top:2px;color:var(--dim)}
+.row.cur{background:var(--accS);color:var(--ink);border-left-color:var(--acc)}
+.row.cur .t{color:var(--acc)}
+.tsfoot{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);flex-wrap:wrap}
+.tsfoot .btn{flex:1}
+
+/* kid fill-in */
+.kid .line1{font-size:clamp(1.5rem,3vw,2rem)}
+.blank{display:inline-flex;vertical-align:baseline;margin:0 .12em}
+.blank input{font:600 1em var(--ui);text-align:center;border:0;border-bottom:2px solid var(--acc);background:var(--accS);border-radius:6px 6px 0 0;height:1.45em;padding:0 4px;outline:none;color:var(--ink)}
+.blank input:focus{background:rgba(95,211,179,.22)}
+.blank.ok input{color:var(--acc);background:transparent}
+.blank.bad input{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.kidbar{display:none;gap:8px;flex-wrap:wrap;margin-top:12px}
+.kid .kidbar{display:flex}
+.okmsg{color:var(--acc);font-weight:700;font-size:.95rem}
+
+/* word popover */
+.pop{position:fixed;z-index:60;width:min(340px,92vw);background:#1F232C;border:1px solid #343A47;border-radius:14px;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.pop h4{margin:0;font-size:1.3rem;font-weight:700}
+.pop .ipa{color:var(--muted);font-size:.9rem;margin-top:2px}
+.pop .def{margin:10px 0 0;font-size:.92rem;line-height:1.5;color:#C9CED8;max-height:150px;overflow:auto}
+.pop .def i{color:var(--acc);font-style:normal;font-size:.78rem;margin-right:6px}
+.pop .acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.pop .acts .btn{height:36px;font-size:.85rem;padding:0 12px}
+.pop .close{position:absolute;top:8px;right:8px;width:32px;height:32px;border:0;background:transparent;color:var(--muted)}
+
+dialog{border:1px solid var(--line);border-radius:16px;padding:0;width:min(580px,94vw);background:var(--panel);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.6)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.dlg{padding:22px;display:grid;gap:14px}
+.dlg h3{margin:0;font-size:1.15rem}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.two button{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:12px;text-align:left;font-weight:600;line-height:1.35}
+.two button small{display:block;color:var(--muted);font-weight:400;font-size:.78rem}
+.two button[aria-pressed=true]{border-color:var(--accD);background:var(--accS)}
+.in{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--bg);font-size:16px}
+textarea.in{min-height:140px;resize:vertical;font-size:14px}
+.steps{margin:4px 0 0;padding-left:1.2em;color:var(--muted);font-size:.88rem}
+.prog .pb{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:6px}
+.prog .pb i{display:block;height:100%;background:var(--acc);transition:width .3s}
+input[type=file]{font-size:.85rem;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#0B0D10;padding:10px 18px;border-radius:10px;font-weight:600;font-size:.9rem;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header class="top">
+    <a class="brand" href="#" id="home"><span class="mark">紅</span><b>看片學英文</b><span class="en">Movie English</span></a>
+    <div class="seg" role="group" aria-label="誰在用">
+      <button id="mAdult" aria-pressed="true">大人</button>
+      <button id="mKid" aria-pressed="false">Isla 填空</button>
+    </div>
+  </header>
+
+  <main id="vHome">
+    <div class="intro">
+      <div><h1>用喜歡的影片練英文</h1><p>影片配上一段一段的英文字幕。點任何一個字，都能聽美式、英式發音，看英文解釋。</p></div>
+      <button class="btn" id="addBtn">＋ 新增影片</button>
+    </div>
+    <div class="grid" id="list"></div>
+    <section class="words" id="wordsBox"></section>
+  </main>
+
+  <main id="vPlay" class="hidden">
+    <div class="stage">
+      <div class="left">
+        <button class="back" id="backBtn">← 我的影片</button>
+        <div class="screen" id="screen"></div>
+        <div class="vt"><h2 id="vtitle"></h2>
+          <div class="seg" role="group" aria-label="播放速度" id="speed"><button data-s="0.5">0.5×</button><button data-s="0.75">0.75×</button><button data-s="1">1×</button><button data-s="1.25">1.25×</button></div>
+        </div>
+        <div class="cap" id="cap">
+          <div class="capmeta"><span id="num"></span><span id="tm"></span></div>
+          <div class="line0" id="l0"></div>
+          <div class="line1" id="l1"></div>
+          <div class="line2" id="l2"></div>
+          <div class="kidbar"><button class="btn line" id="hintBtn">💡 提示一個字母</button><button class="btn line" id="showBtn">看答案</button><span class="okmsg hidden" id="okMsg">答對了！</span></div>
+          <div class="bar">
+            <button class="icon" id="prevBtn" aria-label="上一句"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <button class="icon big" id="playBtn" aria-label="播這一句"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></button>
+            <button class="icon" id="nextBtn" aria-label="下一句"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+            <button class="icon" id="loopBtn" aria-label="這句重複播"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></button>
+            <span class="sp"></span>
+            <label class="tog" id="apTog"><input type="checkbox" id="autoPause">每句停一下</label>
+            <div class="seg" role="group" aria-label="發音"><button id="accUS">美式</button><button id="accUK">英式</button></div>
+          </div>
+        </div>
+      </div>
+      <aside class="ts">
+        <div class="tshead"><b>英文字幕</b><span class="sub" id="cnt2"></span></div>
+        <div class="tsl" id="tsl"></div>
+        <div class="tsfoot"><a class="btn line" id="gtr" target="_blank" rel="noopener">這句的中文</a><button class="btn line" id="dlSrt">下載字幕檔</button></div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<dialog id="dlg">
+  <div class="dlg">
+    <h3>新增影片</h3>
+    <div class="two">
+      <button type="button" id="tYT" aria-pressed="true">YouTube 影片<small>網址＋轉錄稿</small></button>
+      <button type="button" id="tFile" aria-pressed="false">裝置裡的影片檔<small>自動聽寫出英文字幕</small></button>
+    </div>
+    <div id="pYT" class="dlg" style="padding:0">
+      <input class="in" id="ytUrl" placeholder="YouTube 網址" inputmode="url">
+      <div><div class="lbl">字幕</div>
+        <ol class="steps"><li>用電腦打開這支 YouTube 影片</li><li>說明欄按「…更多」→「顯示轉錄稿」</li><li>轉錄稿全選、複製，連時間一起貼到下面</li></ol></div>
+      <textarea class="in" id="ytTxt" placeholder="0:01&#10;Hi, welcome back to the store.&#10;0:04&#10;What happened to the $8 one?"></textarea>
+      <label class="sub">或上傳字幕檔（.srt／.vtt）　<input type="file" id="ytSrt" accept=".srt,.vtt,text/vtt"></label>
+    </div>
+    <div id="pFile" class="dlg hidden" style="padding:0">
+      <input type="file" id="vFile" accept="video/*,audio/*">
+      <div class="sub">網頁會在這台裝置上自己聽寫英文字幕，影片不會上傳到任何地方。第一次要下載聽寫模型（約 80MB）。20 分鐘的影集大約要 5～15 分鐘，建議用電腦的 Chrome。</div>
+      <label class="sub">已經有字幕檔就直接用（.srt／.vtt）　<input type="file" id="fSrt" accept=".srt,.vtt,text/vtt"></label>
+      <div class="prog hidden" id="prog"><div class="sub" id="progTxt">準備中…</div><div class="pb"><i id="progBar" style="width:0"></i></div></div>
+    </div>
+    <input class="in" id="vName" placeholder="影片名稱（例如：Bluey S1E3）">
+    <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn line" type="button" id="cancelAdd">取消</button><button class="btn" type="button" id="doAdd">建立</button></div>
+    <div class="sub" id="addMsg" style="color:var(--coral)"></div>
+  </div>
+</dialog>
+<dialog id="dlgDel"><div class="dlg"><h3>移除這部影片？</h3><div class="sub">字幕和進度會一起移除。</div><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn line" id="delNo">取消</button><button class="btn" id="delYes">移除</button></div></div></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+{
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast('裝置空間不夠，存不下了');return false}}};
+let toastT;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),1800)}
+const ST=Object.assign({kid:false,acc:'us',rate:1,ap:false},LS.get('me-set',{}));
+const saveST=()=>LS.set('me-set',ST);
+let VIDS=LS.get('me-videos',[]);const saveV=()=>LS.set('me-videos',VIDS);const subKey=id=>'me-subs-'+id;
+let WORDS=LS.get('me-words',[]);const saveW=()=>LS.set('me-words',WORDS);
+
+// ---------- subtitle parsing ----------
+function tsec(t){t=t.trim().replace(',','.');const p=t.split(':').map(Number);return p.length===3?p[0]*3600+p[1]*60+p[2]:p.length===2?p[0]*60+p[1]:Number(t)}
+function parseSRT(txt){const out=[];txt.replace(/\r/g,'').split(/\n\s*\n/).forEach(b=>{const m=b.match(/(\d[\d:.,]*)\s*-->\s*(\d[\d:.,]*)/);if(!m)return;const lines=b.split('\n');const i=lines.findIndex(l=>l.includes('-->'));const t=lines.slice(i+1).join(' ').replace(/<[^>]+>/g,'').replace(/\{[^}]+\}/g,'').trim();if(t)out.push({s:tsec(m[1]),e:tsec(m[2]),t})});return out}
+function parseYT(txt){
+  const out=[];let curT=null,buf=[];
+  const flush=()=>{if(curT!=null&&buf.length){const t=buf.join(' ').replace(/\s+/g,' ').trim();if(t&&!/^\[.*\]$/.test(t))out.push({s:curT,t})}buf=[]};
+  txt.replace(/\r/g,'').split('\n').forEach(raw=>{const l=raw.trim();if(!l)return;
+    const m=l.match(/^((?:\d{1,2}:)?\d{1,2}:\d{2})(?:\s+|$)(.*)$/);
+    const m2=!m&&l.match(/^((?:\d{1,2}:)?\d{1,2}:\d{2})([A-Za-z"'(\[♪].*)$/);
+    const mm=m||m2;
+    if(mm){flush();curT=tsec(mm[1]);if(mm[2])buf.push(mm[2]);return}
+    if(/^\d+\s*(秒|分鐘|seconds?|minutes?)/.test(l))return;
+    if(curT!=null)buf.push(l)});
+  flush();
+  out.forEach((x,i)=>x.e=out[i+1]?out[i+1].s:x.s+4);
+  return out;
+}
+// merge caption pieces into sentences (whole thoughts, 4–22 words)
+function toSentences(pieces){
+  pieces=pieces.filter(p=>p.t&&p.t.trim()).map(p=>({s:p.s,e:p.e,t:p.t.replace(/\s+/g,' ').replace(/^[-–]\s*/,'').trim()}));
+  const words=pieces.reduce((n,p)=>n+p.t.split(' ').length,0);
+  const punct=pieces.reduce((n,p)=>n+(p.t.match(/[.?!]["')]?(\s|$)/g)||[]).length,0);
+  const hasPunct=punct>words/40;
+  const out=[];let cur=null;
+  for(const p of pieces){
+    if(!cur)cur={s:p.s,e:p.e,t:p.t};else{cur.t+=' '+p.t;cur.e=p.e}
+    const n=cur.t.split(' ').length;
+    const end=hasPunct?/[.?!…]["')\]]?$/.test(cur.t):n>=9;
+    if((end&&n>=3)||n>=22){out.push(cur);cur=null}
+  }
+  if(cur)out.push(cur);
+  return out.map((x,i)=>({s:+x.s.toFixed(2),e:+Math.max(x.e,x.s+1).toFixed(2),t:x.t}));
+}
+function fmt(s){s=Math.max(0,s|0);const h=s/3600|0,m=(s%3600)/60|0,x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')}
+function toSRT(subs){const f=s=>{const ms=Math.round(s*1000);const h=ms/3600000|0,m=(ms%3600000)/60000|0,x=(ms%60000)/1000|0,r=ms%1000;return [h,m,x].map(v=>String(v).padStart(2,'0')).join(':')+','+String(r).padStart(3,'0')};return subs.map((x,i)=>(i+1)+'\n'+f(x.s)+' --> '+f(x.e)+'\n'+x.t+'\n').join('\n')}
+function ytId(u){u=String(u||'').trim();const m=u.match(/(?:youtu\.be\/|v=|\/shorts\/|\/embed\/|\/live\/)([A-Za-z0-9_-]{11})/);return m?m[1]:(/^[A-Za-z0-9_-]{11}$/.test(u)?u:null)}
+
+
+// ---------- home ----------
+function renderHome(){
+  const box=$('#list');box.textContent='';
+  if(!VIDS.length){box.innerHTML='<div class="empty" style="grid-column:1/-1">還沒有影片。按右上角「＋ 新增影片」，貼上 YouTube 網址，或選一個裝置裡的影片檔。</div>'}
+  VIDS.forEach(v=>{const subs=LS.get(subKey(v.id),[]);const pct=subs.length?Math.round(((v.idx||0)+1)/subs.length*100):0;
+    const b=document.createElement('button');b.className='vc';
+    b.innerHTML='<div class="th" '+(v.type==='yt'?'style="background-image:url(https://i.ytimg.com/vi/'+v.yt+'/hqdefault.jpg)"':'')+'>'+(v.type==='yt'?'':'影片檔')+'</div><div class="meta"><b>'+esc(v.name)+'</b><div class="sub">'+subs.length+' 段字幕・看到第 '+((v.idx||0)+1)+' 段</div><div class="pbar"><i style="width:'+pct+'%"></i></div></div>';
+    b.onclick=()=>openVid(v.id);
+    const x=document.createElement('span');x.className='x';x.setAttribute('role','button');x.setAttribute('tabindex','0');x.setAttribute('aria-label','移除');x.textContent='✕';x.style.display='grid';x.style.placeItems='center';
+    x.onclick=e=>{e.stopPropagation();delId=v.id;$('#dlgDel').showModal()};b.append(x);box.append(b)});
+  const wb=$('#wordsBox');wb.textContent='';
+  if(WORDS.length){wb.innerHTML='<div class="lbl">收藏的單字（'+WORDS.length+'）</div>';const c=document.createElement('div');c.className='chips';
+    WORDS.forEach(w=>{const s=document.createElement('button');s.className='chip';s.textContent=w.w;s.onclick=e=>openPop(w.w,w.ctx||'',e.currentTarget);c.append(s)});wb.append(c)}
+}
+let delId=null;
+$('#delNo').onclick=()=>$('#dlgDel').close();
+$('#delYes').onclick=()=>{VIDS=VIDS.filter(v=>v.id!==delId);saveV();try{localStorage.removeItem(subKey(delId))}catch(e){}$('#dlgDel').close();renderHome()};
+
+// ---------- add ----------
+let addType='yt',fileObj=null;
+$('#addBtn').onclick=()=>{addType='yt';setAddType();$('#addMsg').textContent='';$('#prog').classList.add('hidden');$('#doAdd').disabled=false;$('#dlg').showModal()};
+function setAddType(){$('#tYT').setAttribute('aria-pressed',String(addType==='yt'));$('#tFile').setAttribute('aria-pressed',String(addType==='file'));$('#pYT').classList.toggle('hidden',addType!=='yt');$('#pFile').classList.toggle('hidden',addType!=='file')}
+$('#tYT').onclick=()=>{addType='yt';setAddType()};$('#tFile').onclick=()=>{addType='file';setAddType()};
+$('#cancelAdd').onclick=()=>{if(worker){worker.terminate();worker=null}$('#dlg').close()};
+$('#vFile').onchange=e=>{fileObj=e.target.files[0]||null;if(fileObj&&!$('#vName').value)$('#vName').value=fileObj.name.replace(/\.[^.]+$/,'')};
+const readText=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsText(f)});
+function saveNew(v,subs){if(!subs.length){$('#addMsg').textContent='沒有讀到字幕，請確認時間也一起貼上了';return false}
+  if(!LS.set(subKey(v.id),subs))return false;VIDS.unshift(v);saveV();$('#dlg').close();renderHome();openVid(v.id);toast('完成，共 '+subs.length+' 段字幕');return true}
+$('#doAdd').onclick=async()=>{const msg=$('#addMsg');msg.textContent='';const id='v'+Date.now().toString(36);
+  if(addType==='yt'){const yt=ytId($('#ytUrl').value);if(!yt){msg.textContent='YouTube 網址好像不對';return}
+    const f=$('#ytSrt').files[0];const pieces=f?parseSRT(await readText(f)):parseYT($('#ytTxt').value);
+    if(!pieces.length){msg.textContent='請貼上轉錄稿（含時間），或上傳字幕檔';return}
+    saveNew({id,type:'yt',yt,name:$('#vName').value.trim()||'YouTube 影片',idx:0},toSentences(pieces))}
+  else{if(!fileObj){msg.textContent='請先選一個影片檔';return}
+    const v={id,type:'file',fkey:fileObj.name+'|'+fileObj.size,name:$('#vName').value.trim()||fileObj.name,idx:0};
+    const sf=$('#fSrt').files[0];if(sf){fileCache[v.fkey]=fileObj;saveNew(v,toSentences(parseSRT(await readText(sf))));return}
+    $('#doAdd').disabled=true;
+    try{const pieces=await transcribe(fileObj);fileCache[v.fkey]=fileObj;saveNew(v,toSentences(pieces))}catch(e){msg.textContent=e&&e.message?e.message:'聽寫失敗，請用電腦的 Chrome 再試一次'}
+    $('#doAdd').disabled=false}};
+
+// ---------- in-browser transcription (Whisper, runs on this device) ----------
+let worker=null;const fileCache={};
+const WORKER_SRC=`
+import {pipeline,env} from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1';
+env.allowLocalModels=false;
+let asr=null;
+self.onmessage=async e=>{const {audio,sr}=e.data;
+  try{
+    if(!asr){const gpu=!!(self.navigator&&navigator.gpu);
+      const opt={device:gpu?'webgpu':'wasm',dtype:gpu?'fp32':'q8',progress_callback:p=>{if(p.status==='progress'&&p.total)self.postMessage({type:'dl',pct:p.loaded/p.total,file:p.file})}};
+      try{asr=await pipeline('automatic-speech-recognition','Xenova/whisper-base.en',opt)}
+      catch(err){opt.device='wasm';opt.dtype='q8';asr=await pipeline('automatic-speech-recognition','Xenova/whisper-base.en',opt)}}
+    const W=30*sr,n=Math.ceil(audio.length/W),out=[];
+    for(let i=0;i<n;i++){const seg=audio.subarray(i*W,Math.min(audio.length,(i+1)*W));
+      if(seg.length<sr*0.5)break;
+      const r=await asr(seg,{return_timestamps:true});
+      (r.chunks||[{text:r.text,timestamp:[0,seg.length/sr]}]).forEach(c=>{const s=(c.timestamp[0]||0)+i*30,en=(c.timestamp[1]==null?30:c.timestamp[1])+i*30;out.push({s,e:Math.min(en,(i+1)*30),t:(c.text||'').trim()})});
+      self.postMessage({type:'step',done:i+1,total:n})}
+    self.postMessage({type:'ok',pieces:out});
+  }catch(err){self.postMessage({type:'err',msg:String(err&&err.message||err)})}
+};`;
+async function decode16k(file){
+  const buf=await file.arrayBuffer();
+  const AC=window.AudioContext||window.webkitAudioContext;const ac=new AC();
+  let ab;try{ab=await new Promise((res,rej)=>{const p=ac.decodeAudioData(buf,res,rej);if(p&&p.then)p.then(res,rej)})}
+  catch(e){throw new Error('這個影片格式讀不出聲音，試試 MP4 檔')}finally{try{ac.close()}catch(e){}}
+  const len=Math.ceil(ab.duration*16000);const off=new OfflineAudioContext(1,len,16000);
+  const src=off.createBufferSource();src.buffer=ab;src.connect(off.destination);src.start();
+  const r=await off.startRendering();return r.getChannelData(0);
+}
+function setProg(t,p){$('#prog').classList.remove('hidden');$('#progTxt').textContent=t;$('#progBar').style.width=Math.round(p*100)+'%'}
+async function transcribe(file){
+  setProg('先把影片的聲音拿出來…',0.02);
+  const audio=await decode16k(file);
+  setProg('準備聽寫模型…（第一次要下載，請稍等）',0.04);
+  if(worker)worker.terminate();
+  worker=new Worker(URL.createObjectURL(new Blob([WORKER_SRC],{type:'text/javascript'})),{type:'module'});
+  return new Promise((res,rej)=>{
+    worker.onmessage=e=>{const d=e.data;
+      if(d.type==='dl')setProg('下載聽寫模型 '+Math.round(d.pct*100)+'%（只有第一次）',0.04+d.pct*0.1);
+      else if(d.type==='step')setProg('聽寫中… '+d.done+' / '+d.total+' 段（每段 30 秒）',0.15+0.85*d.done/d.total);
+      else if(d.type==='ok'){worker.terminate();worker=null;setProg('完成！',1);res(d.pieces)}
+      else if(d.type==='err'){worker.terminate();worker=null;rej(new Error('聽寫失敗：'+d.msg+'。建議用電腦的 Chrome 再試一次'))}};
+    worker.onerror=()=>{rej(new Error('這個瀏覽器跑不動聽寫，請用電腦的 Chrome'))};
+    worker.postMessage({audio,sr:16000},[audio.buffer]);
+  });
+}
+
+
+// ---------- player ----------
+let cur=null,subs=[],player=null,ytReady=false,vEl=null,segEnd=null,loopOn=false,apHold=-1;
+function openVid(id){cur=VIDS.find(v=>v.id===id);if(!cur)return;subs=LS.get(subKey(id),[]);cur.idx=Math.min(cur.idx||0,subs.length-1);
+  $('#vHome').classList.add('hidden');$('#vPlay').classList.remove('hidden');$('#vtitle').textContent=cur.name;location.hash=id;
+  buildPlayer();syncOpts();renderTS();renderCap();window.scrollTo(0,0)}
+function goHome(){stopSay();segEnd=null;cur=null;if(player&&player.destroy){try{player.destroy()}catch(e){}}player=null;vEl=null;$('#screen').textContent='';closePop();
+  $('#vPlay').classList.add('hidden');$('#vHome').classList.remove('hidden');history.replaceState(null,'',location.pathname);renderHome()}
+$('#backBtn').onclick=goHome;$('#home').onclick=e=>{e.preventDefault();goHome()};
+function buildPlayer(){const sc=$('#screen');sc.textContent='';player=null;vEl=null;ytReady=false;
+  if(cur.type==='yt'){const d=document.createElement('div');d.id='ytp';sc.append(d);
+    loadYT().then(()=>{player=new YT.Player('ytp',{videoId:cur.yt,playerVars:{playsinline:1,rel:0,modestbranding:1,cc_load_policy:0,iv_load_policy:3},
+      events:{onReady:()=>{ytReady=true;setRate();seek(subs[cur.idx]?subs[cur.idx].s:0)},onError:()=>{sc.innerHTML='<div class="pick"><b>這支影片不允許在別的網頁播放</b><span>字幕還是可以照常練；想看影片請 <a style="color:var(--acc)" href="https://youtu.be/'+cur.yt+'" target="_blank" rel="noopener">到 YouTube 開</a></span></div>'}}})})}
+  else{const f=fileCache[cur.fkey];
+    if(f){vEl=document.createElement('video');vEl.src=URL.createObjectURL(f);vEl.controls=true;vEl.playsInline=true;vEl.preload='auto';sc.append(vEl);setRate();vEl.addEventListener('loadedmetadata',()=>seek(subs[cur.idx]?subs[cur.idx].s:0),{once:true})}
+    else{const p=document.createElement('label');p.className='pick';p.innerHTML='<b>選擇影片檔</b><span>影片檔留在妳的裝置上，每次打開要重新選一次（字幕和進度都還在）</span><span class="btn">選影片檔</span>';
+      const inp=document.createElement('input');inp.type='file';inp.accept='video/*,audio/*';inp.hidden=true;p.append(inp);
+      inp.onchange=()=>{const f2=inp.files[0];if(!f2)return;if(f2.name+'|'+f2.size!==cur.fkey)toast('檔案好像不一樣，先放上來');fileCache[cur.fkey]=f2;buildPlayer()};sc.append(p)}}}
+let ytP=null;function loadYT(){if(window.YT&&YT.Player)return Promise.resolve();if(ytP)return ytP;ytP=new Promise(res=>{window.onYouTubeIframeAPIReady=res;const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';document.head.append(s)});return ytP}
+const ready=()=>!!(vEl||(player&&ytReady));
+function nowT(){try{return vEl?vEl.currentTime:(player&&ytReady?player.getCurrentTime():0)}catch(e){return 0}}
+function isPlaying(){try{return vEl?!vEl.paused:(player&&ytReady&&player.getPlayerState()===1)}catch(e){return false}}
+function seek(t){if(vEl)vEl.currentTime=t;else if(player&&ytReady)player.seekTo(t,true)}
+function play(){if(vEl){const p=vEl.play();if(p&&p.catch)p.catch(()=>{})}else if(player&&ytReady)player.playVideo()}
+function pause(){if(vEl)vEl.pause();else if(player&&ytReady)player.pauseVideo()}
+function setRate(){if(vEl)vEl.playbackRate=ST.rate;else if(player&&ytReady)try{player.setPlaybackRate(ST.rate)}catch(e){}}
+function playLine(i){if(i!=null)setIdx(i);const s=subs[cur.idx];if(!s)return;if(!ready()){toast(cur.type==='yt'?'影片還在載入…':'請先選影片檔');return}stopSay();apHold=-1;seek(Math.max(0,s.s-0.1));segEnd=s.e+0.2;play()}
+setInterval(()=>{if(!cur||!ready())return;const t=nowT();
+  if(segEnd!=null){if(t>=segEnd){if(loopOn){seek(Math.max(0,subs[cur.idx].s-0.1));play()}else{pause();segEnd=null}}return}
+  if(!isPlaying())return;
+  const i=findIdx(t);
+  if(ST.ap&&apHold!==cur.idx&&subs[cur.idx]&&t>=subs[cur.idx].e+0.05&&t<subs[cur.idx].e+1.5&&i!==cur.idx){pause();apHold=cur.idx;return}
+  if(i>=0&&i!==cur.idx){setIdx(i)}},100);
+function findIdx(t){let lo=0,hi=subs.length-1,a=-1;while(lo<=hi){const m=(lo+hi)>>1;if(subs[m].s<=t+0.05){a=m;lo=m+1}else hi=m-1}return a}
+function setIdx(i){i=Math.max(0,Math.min(subs.length-1,i));if(i===cur.idx&&$('#l1').dataset.i==String(i))return;cur.idx=i;saveV();renderCap();markTS()}
+
+// ---------- caption area ----------
+const plain=s=>s?s.t.replace(/\[[^\]]*\]|\([^)]*\)|♪/g,'').replace(/\s+/g,' ').trim():'';
+function core(tok){const m=tok.match(/^([^A-Za-z0-9]*)([A-Za-z0-9][A-Za-z0-9'’\-]*[A-Za-z0-9]|[A-Za-z0-9])([^A-Za-z0-9]*)$/);return m?{pre:m[1],w:m[2],post:m[3]}:null}
+let inputs=[];
+function renderCap(){if(!cur)return;const s=subs[cur.idx];
+  $('#num').textContent=(cur.idx+1)+' / '+subs.length;$('#tm').textContent=s?fmt(s.s)+' – '+fmt(s.e):'';
+  $('#l0').textContent=plain(subs[cur.idx-1]);$('#l2').textContent=plain(subs[cur.idx+1]);
+  $('#gtr').href='https://translate.google.com/?sl=en&tl=zh-TW&op=translate&text='+encodeURIComponent(plain(s));
+  const box=$('#l1');box.textContent='';box.dataset.i=cur.idx;inputs=[];$('#okMsg').classList.add('hidden');
+  if(!s)return;const toks=plain(s).split(' ').filter(Boolean);
+  const blanks=ST.kid?kidBlanks(toks):new Set();
+  toks.forEach((tok,i)=>{const c=core(tok);
+    if(blanks.has(i)){if(c.pre)box.append(c.pre);const w=document.createElement('span');w.className='blank';const inp=document.createElement('input');
+      ['autocapitalize','autocomplete','autocorrect'].forEach(a=>inp.setAttribute(a,'off'));inp.spellcheck=false;inp.dataset.ans=c.w;inp.value=c.w[0];inp.style.width=(c.w.length*0.62+0.8)+'em';inp.setAttribute('aria-label',c.w.length+' 個字母');
+      inp.oninput=()=>chk(inp,w);w.append(inp);box.append(w,(c.post||'')+' ');inputs.push(inp)}
+    else if(c){if(c.pre)box.append(c.pre);const w=document.createElement('span');w.className='wd'+(WORDS.some(x=>x.w.toLowerCase()===c.w.toLowerCase())?' saved':'');w.textContent=c.w;w.onclick=e=>{pause();segEnd=null;openPop(c.w,plain(s),e.currentTarget)};box.append(w,(c.post||'')+' ')}
+    else box.append(tok+' ')});
+  $('#hintBtn').disabled=$('#showBtn').disabled=!inputs.length}
+const EASY=new Set('a an the i you he she it we they me him her us them my your his its our is am are was were be do does did have has had can will not no yes and or but so if to of in on at for with from up down out off over by as all some one two three what who where when why how there here go went come came get got see saw look like want need know think say said make made take good big small little new old more very just now then too back day time way oh okay hi hello please thank thanks sorry this that cat dog red blue run fun play'.split(' '));
+function kidBlanks(toks){const c=toks.map((t,i)=>({i,c:core(t)})).filter(x=>x.c&&/^[A-Za-z]+$/.test(x.c.w)&&x.c.w.length>=2&&x.c.w.length<=6);
+  let pick=c.filter(x=>EASY.has(x.c.w.toLowerCase()));if(!pick.length)pick=c.filter(x=>x.c.w.length<=4);if(!pick.length)pick=c;
+  let h=cur.idx*7+3;pick.sort((a,b)=>((a.i*31+h)%13)-((b.i*31+h)%13));return new Set(pick.slice(0,toks.length>8?2:1).map(x=>x.i))}
+const norm=s=>s.toLowerCase().replace(/[’`]/g,"'").replace(/[^a-z0-9']/g,'');
+function chk(inp,w){const a=norm(inp.dataset.ans),v=norm(inp.value);
+  if(v===a){inp.dataset.ok=1;inp.readOnly=true;w.classList.add('ok');const nx=inputs.find(x=>!x.dataset.ok);if(nx)nx.focus();else{$('#okMsg').classList.remove('hidden');say(plain(subs[cur.idx]))}}
+  else if(v.length>=a.length){w.classList.remove('bad');void w.offsetWidth;w.classList.add('bad')}}
+$('#hintBtn').onclick=()=>{const inp=inputs.find(x=>x===document.activeElement&&!x.dataset.ok)||inputs.find(x=>!x.dataset.ok);if(!inp)return;const a=inp.dataset.ans;let k=0;while(k<inp.value.length&&norm(inp.value[k])===norm(a[k]))k++;inp.value=a.slice(0,k+1);inp.focus();chk(inp,inp.parentNode)};
+$('#showBtn').onclick=()=>{inputs.forEach(inp=>{if(!inp.dataset.ok){inp.value=inp.dataset.ans;inp.dataset.ok=1;inp.readOnly=true;inp.parentNode.classList.add('ok');inp.style.color='var(--coral)'}});say(plain(subs[cur.idx]))};
+
+// ---------- transcript ----------
+function renderTS(){const box=$('#tsl');box.textContent='';$('#cnt2').textContent=subs.length+' 段';
+  const frag=document.createDocumentFragment();subs.forEach((s,i)=>{const r=document.createElement('div');r.className='row';r.innerHTML='<span class="t">'+fmt(s.s)+'</span><span>'+esc(plain(s))+'</span>';r.onclick=()=>playLine(i);frag.append(r)});box.append(frag);markTS(true)}
+function markTS(jump){const rs=$('#tsl').children;$$('#tsl .row.cur').forEach(r=>r.classList.remove('cur'));const r=rs[cur.idx];if(!r)return;r.classList.add('cur');
+  const box=$('#tsl');const top=r.offsetTop-box.offsetTop;if(jump||top<box.scrollTop+40||top>box.scrollTop+box.clientHeight-80)box.scrollTo({top:top-box.clientHeight/3,behavior:jump?'auto':'smooth'})}
+
+// ---------- controls ----------
+$('#playBtn').onclick=()=>{if(isPlaying()&&segEnd==null){pause();return}playLine()};
+$('#prevBtn').onclick=()=>playLine(cur.idx-1);$('#nextBtn').onclick=()=>playLine(cur.idx+1);
+$('#loopBtn').onclick=()=>{loopOn=!loopOn;$('#loopBtn').classList.toggle('on',loopOn);toast(loopOn?'這句會一直重複':'取消重複');if(loopOn)playLine()};
+$('#autoPause').onchange=e=>{ST.ap=e.target.checked;saveST();$('#apTog').classList.toggle('on',ST.ap);if(ST.ap)toast('每句播完會停下來，按 ▶ 繼續')};
+$$('#speed button').forEach(b=>b.onclick=()=>{ST.rate=+b.dataset.s;saveST();syncOpts();setRate()});
+function setAcc(a){ST.acc=a;saveST();$('#accUS').setAttribute('aria-pressed',String(a==='us'));$('#accUK').setAttribute('aria-pressed',String(a==='uk'))}
+$('#accUS').onclick=()=>{setAcc('us');say(plain(subs[cur.idx]))};$('#accUK').onclick=()=>{setAcc('uk');say(plain(subs[cur.idx]))};
+function syncOpts(){setAcc(ST.acc);$$('#speed button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.s===ST.rate)));$('#autoPause').checked=ST.ap;$('#apTog').classList.toggle('on',ST.ap);$('#loopBtn').classList.toggle('on',loopOn);applyMode()}
+function applyMode(){$('#mAdult').setAttribute('aria-pressed',String(!ST.kid));$('#mKid').setAttribute('aria-pressed',String(ST.kid));document.body.classList.toggle('kid',ST.kid)}
+$('#mAdult').onclick=()=>{ST.kid=false;saveST();applyMode();if(cur)renderCap()};$('#mKid').onclick=()=>{ST.kid=true;saveST();applyMode();if(cur)renderCap()};
+$('#dlSrt').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([toSRT(subs)],{type:'text/plain'}));a.download=(cur.name||'subtitles')+'.srt';document.body.append(a);a.click();a.remove()};
+document.addEventListener('keydown',e=>{if(!cur||/INPUT|TEXTAREA/.test(e.target.tagName))return;if(e.key===' '){e.preventDefault();$('#playBtn').click()}else if(e.key==='ArrowRight'){e.preventDefault();playLine(cur.idx+1)}else if(e.key==='ArrowLeft'){e.preventDefault();playLine(cur.idx-1)}else if(e.key==='r')playLine()});
+
+// ---------- speech ----------
+let voices=[];const loadV=()=>{try{voices=speechSynthesis.getVoices()}catch(e){}};try{loadV();speechSynthesis.onvoiceschanged=loadV}catch(e){}
+function pickVoice(acc){const want=acc==='uk'?'en-GB':'en-US';const vs=voices.filter(v=>(v.lang||'').replace('_','-')===want);
+  const sc=v=>(/premium|enhanced|natural|neural/i.test(v.name)?4:0)+(/Google/.test(v.name)?2:0)+(/Samantha|Daniel|Serena|Ava|Evan|Kate|Arthur|Martha|Zoe/.test(v.name)?1:0)-(/Albert|Bad|Bells|Boing|Bubbles|Cellos|Jester|Organ|Trinoids|Whisper|Wobble|Zarvox|Grandma|Grandpa|Rocko|Shelley|Sandy|Reed|Flo|Eddy/i.test(v.name)?9:0);
+  return vs.sort((a,b)=>sc(b)-sc(a))[0]||null}
+function say(text,acc,rate){try{if(!window.speechSynthesis)return;if(isPlaying())pause();segEnd=null;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);acc=acc||ST.acc;const v=pickVoice(acc);u.lang=acc==='uk'?'en-GB':'en-US';if(v)u.voice=v;u.rate=rate||0.92;speechSynthesis.speak(u)}catch(e){}}
+function stopSay(){try{speechSynthesis.cancel()}catch(e){}}
+
+// ---------- word popover (free dictionary) ----------
+let popEl=null;const DICT={};
+function closePop(){if(popEl){popEl.remove();popEl=null}}
+document.addEventListener('click',e=>{if(popEl&&!popEl.contains(e.target)&&!e.target.closest('.wd,.chip'))closePop()});
+async function openPop(word,ctx,anchor){closePop();const w=word.replace(/[’]/g,"'");
+  const p=document.createElement('div');p.className='pop';popEl=p;
+  const saved=()=>WORDS.some(x=>x.w.toLowerCase()===w.toLowerCase());
+  p.innerHTML='<button class="close" aria-label="關閉">✕</button><h4>'+esc(w)+'</h4><div class="ipa" id="pIpa">…</div><div class="def" id="pDef">查詢中…</div><div class="acts"><button class="btn line" id="pUS">🔊 美式</button><button class="btn line" id="pUK">🔊 英式</button><a class="btn line" target="_blank" rel="noopener" href="https://translate.google.com/?sl=en&tl=zh-TW&op=translate&text='+encodeURIComponent(w)+'">中文</a><button class="btn" id="pSave"></button></div>';
+  document.body.append(p);
+  const r=anchor.getBoundingClientRect();const pw=p.offsetWidth,ph=p.offsetHeight;let x=Math.min(Math.max(8,r.left+r.width/2-pw/2),innerWidth-pw-8);let y=r.bottom+10;if(y+ph>innerHeight-8)y=Math.max(8,r.top-ph-10);p.style.left=x+'px';p.style.top=y+'px';
+  p.querySelector('.close').onclick=closePop;p.querySelector('#pUS').onclick=()=>say(w,'us',0.85);p.querySelector('#pUK').onclick=()=>say(w,'uk',0.85);
+  const sb=p.querySelector('#pSave');const syncS=()=>{sb.textContent=saved()?'★ 已收藏':'☆ 收藏'};syncS();
+  sb.onclick=()=>{if(saved())WORDS=WORDS.filter(x=>x.w.toLowerCase()!==w.toLowerCase());else WORDS.unshift({w,ctx});saveW();syncS();if(cur)renderCap();else renderHome()};
+  say(w,ST.acc,0.85);
+  const key=w.toLowerCase();
+  try{let d=DICT[key];if(!d){const res=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(key));d=res.ok?await res.json():null;DICT[key]=d}
+    if(popEl!==p)return;
+    if(!d||!d[0]){p.querySelector('#pIpa').textContent='';p.querySelector('#pDef').textContent='字典裡查不到（可能是人名或口語），按「中文」看看';return}
+    const ph=(d[0].phonetics||[]).map(x=>x.text).filter(Boolean);p.querySelector('#pIpa').textContent=ph.slice(0,2).join('  ')||'';
+    const defs=[];d.forEach(e=>(e.meanings||[]).forEach(m=>{(m.definitions||[]).slice(0,1).forEach(df=>defs.push('<div><i>'+esc(m.partOfSpeech||'')+'</i>'+esc(df.definition)+'</div>'))}));
+    p.querySelector('#pDef').innerHTML=defs.slice(0,3).join('')||'—'}
+  catch(e){if(popEl===p){p.querySelector('#pIpa').textContent='';p.querySelector('#pDef').textContent='連不上字典，按「中文」看看'}}}
+
+// ---------- start ----------
+applyMode();renderHome();const h=location.hash.slice(1);if(h&&VIDS.find(v=>v.id===h))openVid(h);
+}
+</script>
+</body>
+</html>
