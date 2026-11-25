@@ -93,6 +93,12 @@ header.top{display:flex;align-items:center;gap:14px;height:64px;border-bottom:1p
 .line1 .wd{cursor:pointer;border-radius:5px;padding:0 1px;transition:background .12s}
 .line1 .wd:hover{background:var(--accS);color:var(--acc)}
 .line1 .wd.saved{text-decoration:underline;text-decoration-color:var(--coral);text-decoration-thickness:2px;text-underline-offset:5px}
+.linez{font-size:clamp(1.02rem,2vw,1.2rem);color:var(--warn);line-height:1.5;margin:0 0 6px;min-height:1.5em}
+.linez.hid{visibility:hidden}
+.row .z{display:block;font-size:.85rem;color:var(--dim);margin-top:2px}
+.row.cur .z{color:var(--warn)}
+.sortbar{display:flex;align-items:center;gap:10px;margin:0 0 14px;flex-wrap:wrap}
+.sortbar .lbl{margin:0}
 .line0,.line2{color:var(--dim);font-size:.95rem;line-height:1.45}
 .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
 .bar .sp{flex:1}
@@ -174,6 +180,7 @@ input[type=file]{font-size:.85rem;color:var(--muted)}
       <div><h1>用喜歡的影片練英文</h1><p>影片配上一段一段的英文字幕。點任何一個字，都能聽美式、英式發音，看英文解釋。</p></div>
       <button class="btn" id="addBtn">＋ 新增影片</button>
     </div>
+    <div class="sortbar" id="sortBar"><span class="lbl">排序</span><div class="seg" role="group" aria-label="影片排序"><button data-o="name">照片名</button><button data-o="seen">最近看過</button><button data-o="new">最新加入</button></div></div>
     <div class="grid" id="list"></div>
     <section class="words" id="wordsBox"></section>
   </main>
@@ -190,6 +197,7 @@ input[type=file]{font-size:.85rem;color:var(--muted)}
           <div class="capmeta"><span id="num"></span><span id="tm"></span></div>
           <div class="line0" id="l0"></div>
           <div class="line1" id="l1"></div>
+          <div class="linez" id="lz"></div>
           <div class="line2" id="l2"></div>
           <div class="kidbar"><button class="btn line" id="hintBtn">💡 提示一個字母</button><button class="btn line" id="showBtn">看答案</button><span class="okmsg hidden" id="okMsg">答對了！</span></div>
           <div class="bar">
@@ -198,6 +206,7 @@ input[type=file]{font-size:.85rem;color:var(--muted)}
             <button class="icon" id="nextBtn" aria-label="下一句"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
             <button class="icon" id="loopBtn" aria-label="這句重複播"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></button>
             <span class="sp"></span>
+            <label class="tog" id="zhTog"><input type="checkbox" id="zhOn">中文</label>
             <label class="tog" id="apTog"><input type="checkbox" id="autoPause">每句停一下</label>
             <div class="seg" role="group" aria-label="發音"><button id="accUS">美式</button><button id="accUK">英式</button></div>
           </div>
@@ -206,7 +215,7 @@ input[type=file]{font-size:.85rem;color:var(--muted)}
       <aside class="ts">
         <div class="tshead"><b>英文字幕</b><span class="sub" id="cnt2"></span></div>
         <div class="tsl" id="tsl"></div>
-        <div class="tsfoot"><a class="btn line" id="gtr" target="_blank" rel="noopener">這句的中文</a><button class="btn line" id="dlSrt">下載字幕檔</button></div>
+        <div class="tsfoot"><a class="btn line" id="gtr" target="_blank" rel="noopener">這句的中文</a><label class="btn line" style="cursor:pointer">加中文字幕<input type="file" id="zhSrt" accept=".srt,.vtt,text/vtt" hidden></label><button class="btn line" id="dlSrt">下載字幕檔</button></div>
       </aside>
     </div>
   </main>
@@ -246,14 +255,14 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast('裝置空間不夠，存不下了');return false}}};
 let toastT;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),1800)}
-const ST=Object.assign({kid:false,acc:'us',rate:1,ap:false},LS.get('me-set',{}));
+const ST=Object.assign({kid:false,acc:'us',rate:1,ap:false,zh:false,order:'name'},LS.get('me-set',{}));
 const saveST=()=>LS.set('me-set',ST);
 let VIDS=LS.get('me-videos',[]);const saveV=()=>LS.set('me-videos',VIDS);const subKey=id=>'me-subs-'+id;
 let WORDS=LS.get('me-words',[]);const saveW=()=>LS.set('me-words',WORDS);
 
 // ---------- subtitle parsing ----------
 function tsec(t){t=t.trim().replace(',','.');const p=t.split(':').map(Number);return p.length===3?p[0]*3600+p[1]*60+p[2]:p.length===2?p[0]*60+p[1]:Number(t)}
-function parseSRT(txt){const out=[];txt.replace(/\r/g,'').split(/\n\s*\n/).forEach(b=>{const m=b.match(/(\d[\d:.,]*)\s*-->\s*(\d[\d:.,]*)/);if(!m)return;const lines=b.split('\n');const i=lines.findIndex(l=>l.includes('-->'));const t=lines.slice(i+1).join(' ').replace(/<[^>]+>/g,'').replace(/\{[^}]+\}/g,'').trim();if(t)out.push({s:tsec(m[1]),e:tsec(m[2]),t})});return out}
+function parseSRT(txt){const out=[];txt.replace(/\r/g,'').split(/\n\s*\n/).forEach(b=>{const m=b.match(/(\d[\d:.,]*)\s*-->\s*(\d[\d:.,]*)/);if(!m)return;const lines=b.split('\n');const i=lines.findIndex(l=>l.includes('-->'));const cl=x=>x.replace(/<[^>]+>/g,'').replace(/\{[^}]+\}/g,'').trim();const L=lines.slice(i+1).map(cl).filter(Boolean);const cj=x=>/[\u3400-\u9fff]/.test(x);const t=L.filter(x=>!cj(x)).join(' ').trim(),z=L.filter(cj).join(' ').trim();if(t){const o={s:tsec(m[1]),e:tsec(m[2]),t};if(z)o.z=z;out.push(o)}});return out}
 function parseYT(txt){
   const out=[];let curT=null,buf=[];
   const flush=()=>{if(curT!=null&&buf.length){const t=buf.join(' ').replace(/\s+/g,' ').trim();if(t&&!/^\[.*\]$/.test(t))out.push({s:curT,t})}buf=[]};
@@ -272,6 +281,7 @@ function parseYT(txt){
 }
 // merge caption pieces into sentences (whole thoughts, 4–22 words)
 function toSentences(pieces){
+  if(pieces.some(p=>p.z))return pieces.filter(p=>p.t).map(p=>({s:+p.s.toFixed(2),e:+Math.max(p.e,p.s+1).toFixed(2),t:p.t.replace(/\s+/g,' ').trim(),z:p.z||''}));
   pieces=pieces.filter(p=>p.t&&p.t.trim()).map(p=>({s:p.s,e:p.e,t:p.t.replace(/\s+/g,' ').replace(/^[-–]\s*/,'').trim()}));
   const words=pieces.reduce((n,p)=>n+p.t.split(' ').length,0);
   const punct=pieces.reduce((n,p)=>n+(p.t.match(/[.?!]["')]?(\s|$)/g)||[]).length,0);
@@ -287,15 +297,21 @@ function toSentences(pieces){
   return out.map((x,i)=>({s:+x.s.toFixed(2),e:+Math.max(x.e,x.s+1).toFixed(2),t:x.t}));
 }
 function fmt(s){s=Math.max(0,s|0);const h=s/3600|0,m=(s%3600)/60|0,x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')}
-function toSRT(subs){const f=s=>{const ms=Math.round(s*1000);const h=ms/3600000|0,m=(ms%3600000)/60000|0,x=(ms%60000)/1000|0,r=ms%1000;return [h,m,x].map(v=>String(v).padStart(2,'0')).join(':')+','+String(r).padStart(3,'0')};return subs.map((x,i)=>(i+1)+'\n'+f(x.s)+' --> '+f(x.e)+'\n'+x.t+'\n').join('\n')}
+function toSRT(subs){const f=s=>{const ms=Math.round(s*1000);const h=ms/3600000|0,m=(ms%3600000)/60000|0,x=(ms%60000)/1000|0,r=ms%1000;return [h,m,x].map(v=>String(v).padStart(2,'0')).join(':')+','+String(r).padStart(3,'0')};return subs.map((x,i)=>(i+1)+'\n'+f(x.s)+' --> '+f(x.e)+'\n'+x.t+(x.z?'\n'+x.z:'')+'\n').join('\n')}
 function ytId(u){u=String(u||'').trim();const m=u.match(/(?:youtu\.be\/|v=|\/shorts\/|\/embed\/|\/live\/)([A-Za-z0-9_-]{11})/);return m?m[1]:(/^[A-Za-z0-9_-]{11}$/.test(u)?u:null)}
 
 
 // ---------- home ----------
+const coll=new Intl.Collator('zh-Hant',{numeric:true,sensitivity:'base'});
+function sortedVids(){const a=VIDS.slice();const t=v=>parseInt(v.id.slice(1),36)||0;
+  if(ST.order==='name')a.sort((x,y)=>coll.compare(x.name,y.name));
+  else if(ST.order==='seen')a.sort((x,y)=>(y.seen||t(y))-(x.seen||t(x)));
+  else a.sort((x,y)=>t(y)-t(x));return a}
+$$('#sortBar button').forEach(b=>b.onclick=()=>{ST.order=b.dataset.o;saveST();renderHome()});
 function renderHome(){
-  const box=$('#list');box.textContent='';
+  const box=$('#list');box.textContent='';$('#sortBar').style.display=VIDS.length>1?'':'none';$$('#sortBar button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.o===ST.order)));
   if(!VIDS.length){box.innerHTML='<div class="empty" style="grid-column:1/-1">還沒有影片。按右上角「＋ 新增影片」，貼上 YouTube 網址，或選一個裝置裡的影片檔。</div>'}
-  VIDS.forEach(v=>{const subs=LS.get(subKey(v.id),[]);const pct=subs.length?Math.round(((v.idx||0)+1)/subs.length*100):0;
+  sortedVids().forEach(v=>{const subs=LS.get(subKey(v.id),[]);const pct=subs.length?Math.round(((v.idx||0)+1)/subs.length*100):0;
     const b=document.createElement('button');b.className='vc';
     b.innerHTML='<div class="th" '+(v.type==='yt'?'style="background-image:url(https://i.ytimg.com/vi/'+v.yt+'/hqdefault.jpg)"':'')+'>'+(v.type==='yt'?'':'影片檔')+'</div><div class="meta"><b>'+esc(v.name)+'</b><div class="sub">'+subs.length+' 段字幕・看到第 '+((v.idx||0)+1)+' 段</div><div class="pbar"><i style="width:'+pct+'%"></i></div></div>';
     b.onclick=()=>openVid(v.id);
@@ -382,7 +398,7 @@ async function transcribe(file){
 
 // ---------- player ----------
 let cur=null,subs=[],player=null,ytReady=false,vEl=null,segEnd=null,loopOn=false,apHold=-1,lineDone=-1;
-function openVid(id){cur=VIDS.find(v=>v.id===id);if(!cur)return;subs=LS.get(subKey(id),[]);cur.idx=Math.min(cur.idx||0,subs.length-1);
+function openVid(id){cur=VIDS.find(v=>v.id===id);if(!cur)return;cur.seen=Date.now();saveV();subs=LS.get(subKey(id),[]);cur.idx=Math.min(cur.idx||0,subs.length-1);
   $('#vHome').classList.add('hidden');$('#vPlay').classList.remove('hidden');$('#vtitle').textContent=cur.name;location.hash=id;
   buildPlayer();syncOpts();renderTS();renderCap();window.scrollTo(0,0)}
 function goHome(){stopSay();segEnd=null;cur=null;if(player&&player.destroy){try{player.destroy()}catch(e){}}player=null;vEl=null;$('#screen').textContent='';closePop();
@@ -427,6 +443,7 @@ let inputs=[];
 function renderCap(){if(!cur)return;const s=subs[cur.idx];
   $('#num').textContent=(cur.idx+1)+' / '+subs.length;$('#tm').textContent=s?fmt(s.s)+' – '+fmt(s.e):'';
   $('#l0').textContent=plain(subs[cur.idx-1]);$('#l2').textContent=plain(subs[cur.idx+1]);
+  const hasZ=subs.some(x=>x.z);$('#zhTog').style.display=hasZ?'':'none';const lz=$('#lz');lz.style.display=hasZ&&ST.zh?'':'none';lz.textContent=s&&s.z||'';lz.classList.toggle('hid',ST.kid);
   $('#gtr').href='https://translate.google.com/?sl=en&tl=zh-TW&op=translate&text='+encodeURIComponent(plain(s));
   const box=$('#l1');box.textContent='';box.dataset.i=cur.idx;inputs=[];$('#okMsg').classList.add('hidden');
   if(!s)return;const toks=plain(s).split(' ').filter(Boolean);
@@ -444,14 +461,14 @@ function kidBlanks(toks){const c=toks.map((t,i)=>({i,c:core(t)})).filter(x=>x.c&
   let h=cur.idx*7+3;pick.sort((a,b)=>((a.i*31+h)%13)-((b.i*31+h)%13));return new Set(pick.slice(0,toks.length>8?2:1).map(x=>x.i))}
 const norm=s=>s.toLowerCase().replace(/[’`]/g,"'").replace(/[^a-z0-9']/g,'');
 function chk(inp,w){const a=norm(inp.dataset.ans),v=norm(inp.value);
-  if(v===a){inp.dataset.ok=1;inp.readOnly=true;w.classList.add('ok');const nx=inputs.find(x=>!x.dataset.ok);if(nx)nx.focus();else{$('#okMsg').classList.remove('hidden');say(plain(subs[cur.idx]))}}
+  if(v===a){inp.dataset.ok=1;inp.readOnly=true;w.classList.add('ok');const nx=inputs.find(x=>!x.dataset.ok);if(nx)nx.focus();else{$('#okMsg').classList.remove('hidden');$('#lz').classList.remove('hid');say(plain(subs[cur.idx]))}}
   else if(v.length>=a.length){w.classList.remove('bad');void w.offsetWidth;w.classList.add('bad')}}
 $('#hintBtn').onclick=()=>{const inp=inputs.find(x=>x===document.activeElement&&!x.dataset.ok)||inputs.find(x=>!x.dataset.ok);if(!inp)return;const a=inp.dataset.ans;let k=0;while(k<inp.value.length&&norm(inp.value[k])===norm(a[k]))k++;inp.value=a.slice(0,k+1);inp.focus();chk(inp,inp.parentNode)};
-$('#showBtn').onclick=()=>{inputs.forEach(inp=>{if(!inp.dataset.ok){inp.value=inp.dataset.ans;inp.dataset.ok=1;inp.readOnly=true;inp.parentNode.classList.add('ok');inp.style.color='var(--coral)'}});say(plain(subs[cur.idx]))};
+$('#showBtn').onclick=()=>{inputs.forEach(inp=>{if(!inp.dataset.ok){inp.value=inp.dataset.ans;inp.dataset.ok=1;inp.readOnly=true;inp.parentNode.classList.add('ok');inp.style.color='var(--coral)'}});$('#lz').classList.remove('hid');say(plain(subs[cur.idx]))};
 
 // ---------- transcript ----------
 function renderTS(){const box=$('#tsl');box.textContent='';$('#cnt2').textContent=subs.length+' 段';
-  const frag=document.createDocumentFragment();subs.forEach((s,i)=>{const r=document.createElement('div');r.className='row';r.innerHTML='<span class="t">'+fmt(s.s)+'</span><span>'+esc(plain(s))+'</span>';r.onclick=()=>playLine(i);frag.append(r)});box.append(frag);markTS(true)}
+  const frag=document.createDocumentFragment();subs.forEach((s,i)=>{const r=document.createElement('div');r.className='row';r.innerHTML='<span class="t">'+fmt(s.s)+'</span><span>'+esc(plain(s))+(ST.zh&&s.z&&!ST.kid?'<span class="z">'+esc(s.z)+'</span>':'')+'</span>';r.onclick=()=>playLine(i);frag.append(r)});box.append(frag);markTS(true)}
 function markTS(jump){const rs=$('#tsl').children;$$('#tsl .row.cur').forEach(r=>r.classList.remove('cur'));const r=rs[cur.idx];if(!r)return;r.classList.add('cur');
   const box=$('#tsl');const top=r.offsetTop-box.offsetTop;if(jump||top<box.scrollTop+40||top>box.scrollTop+box.clientHeight-80)box.scrollTo({top:top-box.clientHeight/3,behavior:jump?'auto':'smooth'})}
 
@@ -460,12 +477,18 @@ $('#playBtn').onclick=()=>{if(isPlaying()){pause();segEnd=null;return}playOn()};
 $('#prevBtn').onclick=()=>playLine(cur.idx-1);$('#nextBtn').onclick=()=>playLine(cur.idx+1);
 $('#loopBtn').onclick=()=>{loopOn=!loopOn;$('#loopBtn').classList.toggle('on',loopOn);toast(loopOn?'這句會一直重複':'取消重複');if(loopOn)playLine()};
 $('#autoPause').onchange=e=>{ST.ap=e.target.checked;saveST();$('#apTog').classList.toggle('on',ST.ap);if(ST.ap){toast('每句播完會停下來，按 ▶ 播下一句');if(isPlaying()&&segEnd==null)apHold=-1}else{segEnd=null;toast('會一直播下去')}};
+$('#zhOn').onchange=e=>{ST.zh=e.target.checked;saveST();$('#zhTog').classList.toggle('on',ST.zh);renderCap();renderTS()};
+$('#zhSrt').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!cur)return;
+  const zs=parseSRT(await readText(f)).filter(x=>x.z);if(!zs.length){toast('這個檔案裡沒有中文字幕');return}
+  let n=0;subs.forEach(s=>{let b=null,d=1e9;zs.forEach(z=>{const k=Math.abs(z.s-s.s);if(k<d){d=k;b=z}});if(b&&d<=2.5){s.z=b.z;n++}});
+  if(n<subs.length*0.6){subs=zs.map(x=>({s:x.s,e:Math.max(x.e,x.s+1),t:x.t,z:x.z}));cur.idx=Math.min(cur.idx,subs.length-1);saveV()}
+  LS.set(subKey(cur.id),subs);ST.zh=true;saveST();syncOpts();renderTS();renderCap();toast('中文字幕加好了')};
 $$('#speed button').forEach(b=>b.onclick=()=>{ST.rate=+b.dataset.s;saveST();syncOpts();setRate()});
 function setAcc(a){ST.acc=a;saveST();$('#accUS').setAttribute('aria-pressed',String(a==='us'));$('#accUK').setAttribute('aria-pressed',String(a==='uk'))}
 $('#accUS').onclick=()=>{setAcc('us');say(plain(subs[cur.idx]))};$('#accUK').onclick=()=>{setAcc('uk');say(plain(subs[cur.idx]))};
-function syncOpts(){setAcc(ST.acc);$$('#speed button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.s===ST.rate)));$('#autoPause').checked=ST.ap;$('#apTog').classList.toggle('on',ST.ap);$('#loopBtn').classList.toggle('on',loopOn);applyMode()}
+function syncOpts(){setAcc(ST.acc);$$('#speed button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.s===ST.rate)));$('#autoPause').checked=ST.ap;$('#zhOn').checked=ST.zh;$('#zhTog').classList.toggle('on',ST.zh);$('#apTog').classList.toggle('on',ST.ap);$('#loopBtn').classList.toggle('on',loopOn);applyMode()}
 function applyMode(){$('#mAdult').setAttribute('aria-pressed',String(!ST.kid));$('#mKid').setAttribute('aria-pressed',String(ST.kid));document.body.classList.toggle('kid',ST.kid)}
-$('#mAdult').onclick=()=>{ST.kid=false;saveST();applyMode();if(cur)renderCap()};$('#mKid').onclick=()=>{ST.kid=true;saveST();applyMode();if(cur)renderCap()};
+$('#mAdult').onclick=()=>{ST.kid=false;saveST();applyMode();if(cur){renderCap();renderTS()}};$('#mKid').onclick=()=>{ST.kid=true;saveST();applyMode();if(cur){renderCap();renderTS()}};
 $('#dlSrt').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([toSRT(subs)],{type:'text/plain'}));a.download=(cur.name||'subtitles')+'.srt';document.body.append(a);a.click();a.remove()};
 document.addEventListener('keydown',e=>{if(!cur||/INPUT|TEXTAREA/.test(e.target.tagName))return;if(e.key===' '){e.preventDefault();$('#playBtn').click()}else if(e.key==='ArrowRight'){e.preventDefault();playLine(cur.idx+1)}else if(e.key==='ArrowLeft'){e.preventDefault();playLine(cur.idx-1)}else if(e.key==='r')playLine()});
 
