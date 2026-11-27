@@ -180,7 +180,7 @@ input[type=file]{font-size:.85rem;color:var(--muted)}
   <main id="vHome">
     <div class="intro">
       <div><h1>用喜歡的影片練英文</h1><p>影片配上一段一段的英文字幕。點任何一個字，都能聽美式、英式發音，看英文解釋。</p></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn line" style="cursor:pointer" title="一次選很多個字幕檔，檔名裡有 [YouTube 影片代碼] 就會自動變成影片">批次匯入字幕<input type="file" id="bulkSrt" accept=".srt,.vtt,text/vtt" multiple hidden></label><button class="btn" id="addBtn">＋ 新增影片</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="btn line" style="cursor:pointer" title="選「字幕包」檔案，整個系列一次加進來">匯入字幕包<input type="file" id="bulkSrt" accept=".json,application/json,.srt,.vtt,text/vtt" multiple hidden></label><button class="btn" id="addBtn">＋ 新增影片</button></div>
     </div>
     <div class="sortbar" id="sortBar"><span class="lbl">排序</span><div class="seg" role="group" aria-label="影片排序"><button data-o="name">照片名</button><button data-o="seen">最近看過</button><button data-o="new">最新加入</button></div></div>
     <div class="grid" id="list"></div>
@@ -351,14 +351,17 @@ $('#doAdd').onclick=async()=>{const msg=$('#addMsg');msg.textContent='';const id
 
 // ---------- bulk import: files named "Name [youtubeID].srt" ----------
 $('#bulkSrt').onchange=async e=>{const fs=[...e.target.files];e.target.value='';let add=0,upd=0,skip=0;
-  for(const f of fs){const m=f.name.match(/\[([A-Za-z0-9_-]{11})\]/);if(!m){skip++;continue}
-    const subs=toSentences(parseSRT(await readText(f)));if(!subs.length){skip++;continue}
-    const name=f.name.replace(/\.[^.]+$/,'').replace(/\s*\[[^\]]*\]\s*/g,' ').trim();
+  const items=[];
+  for(const f of fs){const txt=await readText(f);
+    if(/\.json$/i.test(f.name)||/^\s*\{/.test(txt)){try{const pk=JSON.parse(txt);(pk.videos||[]).forEach(v=>{if(v&&/^[A-Za-z0-9_-]{11}$/.test(v.yt)&&Array.isArray(v.subs))items.push({yt:v.yt,name:String(v.name||'YouTube 影片'),subs:v.subs.filter(x=>x&&x.t).map(x=>({s:+x.s||0,e:+x.e||0,t:String(x.t),z:String(x.z||'')}))})})}catch(err){skip++}continue}
+    const m=f.name.match(/\[([A-Za-z0-9_-]{11})\]/);if(!m){skip++;continue}
+    items.push({yt:m[1],name:f.name.replace(/\.[^.]+$/,'').replace(/\s*\[[^\]]*\]\s*/g,' ').trim(),subs:toSentences(parseSRT(txt))})}
+  for(const it of items){const subs=it.subs,name=it.name,m=[0,it.yt];if(!subs.length){skip++;continue}
     const old=VIDS.find(v=>v.type==='yt'&&v.yt===m[1]);
     if(old){if(LS.set(subKey(old.id),subs)){old.name=name;upd++}}
     else{const id='v'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);if(LS.set(subKey(id),subs)){VIDS.push({id,type:'yt',yt:m[1],name,idx:0});add++}}}
   saveV();renderHome();
-  toast((add?'新增 '+add+' 部':'')+(add&&upd?'、':'')+(upd?'更新 '+upd+' 部':'')+(!add&&!upd?'沒有可以匯入的檔案':'')+(skip?'（'+skip+' 個檔名沒有影片代碼）':''))};
+  toast((add?'新增 '+add+' 部':'')+(add&&upd?'、':'')+(upd?'更新 '+upd+' 部':'')+(!add&&!upd?'沒有可以匯入的檔案':'')+(skip?'（'+skip+' 個讀不到）':''))};
 
 // ---------- in-browser transcription (Whisper, runs on this device) ----------
 let worker=null;const fileCache={};
